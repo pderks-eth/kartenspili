@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 
 function App() {
@@ -9,6 +9,34 @@ function App() {
   const [dealerScore, setDealerScore] = useState(0);
   const [gameState, setGameState] = useState('idle'); // idle, playing, playerBust, dealerBust, playerWin, dealerWin, push
   const [message, setMessage] = useState('Welcome to Blackjack!');
+
+  // Wrap dealCard in useCallback to avoid dependency issues
+  const dealCard = useCallback(async (target) => {
+    try {
+      const response = await fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const card = data.cards[0];
+        if (target === 'player') {
+          setPlayerHand(prevHand => [...prevHand, card]);
+        } else {
+          setDealerHand(prevHand => [...prevHand, card]);
+        }
+      } else {
+        // If we run out of cards, get a new deck
+        if (data.remaining === 0) {
+          await fetchNewDeck();
+          setMessage('New deck shuffled.');
+        } else {
+          setMessage('Error drawing card. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error dealing card:', error);
+      setMessage('Error dealing card. Please try again.');
+    }
+  }, [deckId]);
 
   // Initialize a new deck when the component mounts
   useEffect(() => {
@@ -53,7 +81,7 @@ function App() {
       
       return () => clearTimeout(timeout);
     }
-  }, [dealerScore, gameState]);
+  }, [dealerScore, gameState, dealCard]);
 
   const fetchNewDeck = async () => {
     try {
@@ -103,33 +131,6 @@ function App() {
     } catch (error) {
       console.error('Error dealing initial cards:', error);
       setMessage('Error dealing cards. Please try again.');
-    }
-  };
-
-  const dealCard = async (target) => {
-    try {
-      const response = await fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`);
-      const data = await response.json();
-      
-      if (data.success) {
-        const card = data.cards[0];
-        if (target === 'player') {
-          setPlayerHand(prevHand => [...prevHand, card]);
-        } else {
-          setDealerHand(prevHand => [...prevHand, card]);
-        }
-      } else {
-        // If we run out of cards, get a new deck
-        if (data.remaining === 0) {
-          await fetchNewDeck();
-          setMessage('New deck shuffled.');
-        } else {
-          setMessage('Error drawing card. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Error dealing card:', error);
-      setMessage('Error dealing card. Please try again.');
     }
   };
 
@@ -183,20 +184,6 @@ function App() {
     }
   };
 
-  const getCardValue = (card) => {
-    if (card.value === 'ACE') {
-      return 'A';
-    } else if (card.value === 'KING') {
-      return 'K';
-    } else if (card.value === 'QUEEN') {
-      return 'Q';
-    } else if (card.value === 'JACK') {
-      return 'J';
-    } else {
-      return card.value;
-    }
-  };
-
   return (
     <div className="App">
       <header className="App-header">
@@ -218,8 +205,6 @@ function App() {
                   ) : (
                     <>
                       <img src={card.image} alt={`${card.value} of ${card.suit}`} />
-                      <span className="card-value">{getCardValue(card)}</span>
-                      <span className="card-suit">{card.suit}</span>
                     </>
                   )}
                 </div>
@@ -233,8 +218,6 @@ function App() {
               {playerHand.map((card, index) => (
                 <div key={index} className="card">
                   <img src={card.image} alt={`${card.value} of ${card.suit}`} />
-                  <span className="card-value">{getCardValue(card)}</span>
-                  <span className="card-suit">{card.suit}</span>
                 </div>
               ))}
             </div>
