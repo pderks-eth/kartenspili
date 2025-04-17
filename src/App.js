@@ -191,11 +191,11 @@ function App() {
         <div className="game-container">
           <div className="message-box">
             <p>{message}</p>
-            <p>Player Score: {playerScore} | Dealer Score: {gameState === 'playing' ? '?' : dealerScore}</p>
           </div>
           
           <div className="dealer-hand">
             <h2>Dealer's Hand</h2>
+            <p className='score-text'>Dealer Score: {gameState === 'playing' ? '?' : dealerScore}</p>
             <div className="cards">
               {dealerHand.map((card, index) => (
                 <div key={index} className="card">
@@ -214,6 +214,7 @@ function App() {
           
           <div className="player-hand">
             <h2>Your Hand</h2>
+            <p className='score-text'> Player Score: {playerScore} </p>
             <div className="cards">
               {playerHand.map((card, index) => (
                 <div key={index} className="card">
