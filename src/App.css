@@ -114,6 +114,12 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.score-text {
+  font-size: 18px;
+  margin: 5px 0 10px;
+  color: #ffcc80;
+}
+
 @media (max-width: 600px) {
   .card {
     width: 70px;
